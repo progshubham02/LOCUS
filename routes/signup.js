@@ -1,12 +1,14 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 const pool = require('../config/database');
+const nodemailer = require('nodemailer');
 
 var email;
 
 var otp = Math.random();
 otp = otp * 1000000;
 otp = parseInt(otp);
-console.log(otp);
+// console.log(otp);
 
 let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -15,13 +17,13 @@ let transporter = nodemailer.createTransport({
     service : 'Gmail',
     
     auth: {
-      user: 'Your mail',
-      pass: 'Your pass',
+      user: 'test@codebucket.com',
+      pass: 'Test981@',
     }
     
 });
     
-app.post('/send',function(req,res){
+router.post('/signUp',function(req,res){
     email=req.body.email;
 
      // send mail with defined transport object
@@ -38,11 +40,11 @@ app.post('/send',function(req,res){
         console.log('Message sent: %s', info.messageId);   
         console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
   
-        res.render('otp');
+        res.send({code:1,OTP:otp});
     });
 });
 
-app.post('/verify',function(req,res){
+router.post('/verify',function(req,res){
 
     if(req.body.otp==otp){
         res.send("You has been successfully registered");
@@ -52,7 +54,7 @@ app.post('/verify',function(req,res){
     }
 });  
 
-app.post('/resend',function(req,res){
+router.post('/resend',function(req,res){
     var mailOptions={
         to: email,
        subject: "Otp for registration is: ",
@@ -65,9 +67,8 @@ app.post('/resend',function(req,res){
         }
         console.log('Message sent: %s', info.messageId);   
         console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-        res.render('otp',{msg:"otp has been sent"});
+        res.send({code:1,msg:"otp has been sent"});
     });
-
 });
 
 module.exports = router;

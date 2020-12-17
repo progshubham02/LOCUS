@@ -9,28 +9,8 @@ const pool=mysql.createConnection({
     connectionLimit: 100,
 });
 
-const getQuery = (query, params = null) => {
-    return new Promise((resolve, reject) => {
+// Promisify for Node.js async/await.
+pool.query = util.promisify(pool.query);
 
-        if(params === null) {
-            pool.query(query, (err,results) => {
-                if(err) reject(err);
-        
-                resolve(results);
-            });
-        }
+module.exports = pool;
 
-        else {
-            // console.log(query)
-            pool.query(query, params, (err,results) => {
-                if(err) reject(err);
-
-                resolve(results);
-            });
-        }
-    });
-}
-
-module.exports = {
-    getQuery
-}

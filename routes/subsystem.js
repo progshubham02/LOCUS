@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const conn = require('../config/database');
+const pool = require('../config/database');
 const moment = require('moment');
 var async = require('async');
 var formidable = require('formidable');
@@ -8,19 +8,21 @@ const  getQuery = require('../config/database');
 const path = require('path');
 const gcm = require('node-gcm');
 const mv = require('mv');
+const authorization = require('../helper/jwt');
 
 
-router.post('/:id',async function(req,res){
+router.post('/', authorization,async function(req,res){
     try{
+        console.log("here")
         const {pId} = req.body;
-        const result = await  getQuery("SELECT * FROM sub_systems WHERE pId=?",[pId]);
+        const result = await pool.query("SELECT * FROM sub_systems WHERE pId=? AND flag=0",[pId]);
         res.send({code:1,subsystem: result});
     }catch(err){
         return res.send({code:0,msg:err});
     }
 });
 
-router.post('/edit',async function(req,res){
+router.post('/edit', authorization,async function(req,res){
     try{
         const {ssId} = req.body;
         const result = await  getQuery("SELECT a.details,c.username,c.password FROM sub_systems AS a INNER JOIN products AS b ON a.pId=b.pId INNER JOIN system_integrators AS c ON b.sId=c.sId WHERE a.ssId=?",[ssId]);
@@ -31,7 +33,7 @@ router.post('/edit',async function(req,res){
     }
 })
 
-router.post('/edit/update', async (req,res)=>{
+router.post('/edit/update', authorization, async (req,res)=>{
     try{
         const {pId,name,email} = req.body;
         // const result = await getQuery("UPDATE ")
@@ -44,7 +46,7 @@ router.post('/edit/update', async (req,res)=>{
 });
 
 
-router.post('/delete',async (req,res)=>{
+router.post('/delete', authorization,async (req,res)=>{
     try{
         const {ssId} = req.body;
         const result = await  getQuery("DELETE FROM sub_systems AS a INNER JOIN components AS b ON a.ssId=b.ssId INNER vendor_map AS c ON b.cId = c.cId WHERE a.ssId=?",[ssId]);
@@ -56,10 +58,10 @@ router.post('/delete',async (req,res)=>{
 
 
 
-router.post('/details/:/id',async (req,res)=>{
+router.post('/details', authorization,async (req,res)=>{
     try{
-        const id = req.params.id;
-        const result = await getQuery("SELECT b.details AS ss_details,b.risk AS ss_risk,c.details AS c_details,c.risk AS c_risk,e.username AS v_username FROM sub_systems AS bINNER JOIN components AS c ON b.ssId=c.ssId INNER JOIN vendor_map AS d ON c.cId=d.cId INNER JOIN vendor AS e ON d.vId = e.vId WHERE ssId = ?",[id]);
+        const {ssId} = req.body;
+        const result = await getQuery("SELECT b.details AS ss_details,b.risk AS ss_risk,c.details AS c_details,c.risk AS c_risk,e.username AS v_username FROM sub_systems AS bINNER JOIN components AS c ON b.ssId=c.ssId INNER JOIN vendor_map AS d ON c.cId=d.cId INNER JOIN vendor AS e ON d.vId = e.vId WHERE ssId = ?",[ssId]);
         res.send({code:1,product_details: result});
 
     }catch(err){
@@ -67,7 +69,7 @@ router.post('/details/:/id',async (req,res)=>{
     }
 });
 
-router.post('/add',async (req,res)=>{
+router.post('/add', authorization,async (req,res)=>{
     try{
         const {
             name,

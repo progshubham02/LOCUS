@@ -8,9 +8,10 @@ const  getQuery = require('../config/database');
 const path = require('path');
 const gcm = require('node-gcm');
 const mv = require('mv');
+const authorization = require('../helper/jwt');
 
 
-router.post('/:id',async function(req,res){
+router.post('/', authorization,async function(req,res){
     try{
         const {ssId} = req.body;
         const result = await  getQuery("SELECT * FROM components WHERE ssId=?",[ssId]);
@@ -20,7 +21,8 @@ router.post('/:id',async function(req,res){
     }
 });
 
-router.post('/edit',async function(req,res){
+
+router.post('/edit', authorization,async function(req,res){
     try{
         const {cId} = req.body;
         const result = await  getQuery("SELECT a.details,c.username,c.password FROM components AS a INNER JOIN sub_systems AS b ON a.ssId=b.ssId INNER JOIN products AS c ON b.sId = c.sId INNER JOIN system_integrators AS d ON c.sId=d.sId WHERE a.cId=?",[cId]);
@@ -31,7 +33,7 @@ router.post('/edit',async function(req,res){
     }
 })
 
-router.post('/edit/update', async (req,res)=>{
+router.post('/edit/update', authorization, async (req,res)=>{
     try{
         const {pId,name,email} = req.body;
         // const result = await getQuery("UPDATE ")
@@ -44,10 +46,10 @@ router.post('/edit/update', async (req,res)=>{
 });
 
 
-router.post('/delete',async (req,res)=>{
+router.post('/delete', authorization,async (req,res)=>{
     try{
         const {cId} = req.body;
-        const result = await  getQuery("DELETE FROM components AS a INNER JOIN vendor_map AS b ON a.cId=b.cId WHERE a.cId=?",[cId]);
+        const result = await  getQuery("UPDATE components SET flag=1 WHERE a.cId=?",[cId]);
         res.send({code:1,msg:"Component deleted!!!"});
     }catch(err){
         res.send({code:0,msg:err});
@@ -56,18 +58,21 @@ router.post('/delete',async (req,res)=>{
 
 
 
-// router.post('/details/:/id',async (req,res)=>{
-//     try{
-//         const id = req.params.id;
-//         const result = await getQuery("SELECT b.details AS c_details,b.risk AS c_risk,e.username AS v_username FROM components AS b ON b.ssId=c.ssId INNER JOIN vendor_map AS d ON c.cId=d.cId INNER JOIN vendor AS e ON d.vId = e.vId WHERE ssId = ?",[id]);
-//         res.send({code:1,product_details: result});
+router.post('/details', authorization,async (req,res)=>{
+    try{
+        const {
+            ssId,
+            cId
+        } = req.body;
+        const result = await getQuery("SELECT b.details AS c_details,b.risk AS c_risk,e.username AS v_username FROM components AS b ON b.ssId=c.ssId INNER JOIN vendor_map AS d ON c.cId=d.cId INNER JOIN vendor AS e ON d.vId = e.vId WHERE b.cId = ?",[cId]);
+        res.send({code:1,product_details: result});
 
-//     }catch(err){
-//         throw err;
-//     }
-// });
+    }catch(err){
+        throw err;
+    }
+});
 
-router.post('/add',async (req,res)=>{
+router.post('/add', authorization,async (req,res)=>{
     try{
         const {
             name,
@@ -76,7 +81,7 @@ router.post('/add',async (req,res)=>{
             reqFile
         } = req.body;
 
-        const result = await getQuery("INSERT INTO components(`details`,`recomendedDesign`,`ssId`,`reqFile`,`finalDesign`,`risk`) VALUES(?,?,?,?,?,?)",[name,recomendedDesign,ssId,reqFile,0,0]);
+        const result = await getQuery("INSERT INTO components(`details`,`recomendedDesign`,`ssId`,`reqFile`,`finalDesign`,`risk`,`flag`) VALUES(?,?,?,?,?,?)",[name,recomendedDesign,ssId,reqFile,0,0,0]);
         res.send({code:1,msg:"Component Added"});
 
     }catch(err){
