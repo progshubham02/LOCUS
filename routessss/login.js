@@ -13,6 +13,7 @@ router.post('/login',function(req,res){
       var sql="SELECT * FROM system_integrators WHERE email=?";
       pool.query(sql,[username],function(err,result){
       if(result.length)
+      
       {
         if(password == result[0].password)
         {
